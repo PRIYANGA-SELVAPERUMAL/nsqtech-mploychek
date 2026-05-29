@@ -178,9 +178,4 @@ Password: password123
 
 ---
 
-## 👩‍💻 Developed By
 
-**Priyanga S**
-
-Software Engineer Intern Assessment Submission  
-NSQTech Private Limited
