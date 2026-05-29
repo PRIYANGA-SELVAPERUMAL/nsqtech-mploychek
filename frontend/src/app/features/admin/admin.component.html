@@ -1,0 +1,176 @@
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">M</div>
+      <span>MPloyChek</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" (click)="goDashboard()"><span>📊</span> Dashboard</a>
+      <a class="nav-item active"><span>🛡️</span> Admin Panel</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar">{{ auth.getCurrentUser()?.avatar }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ auth.getCurrentUser()?.name }}</div>
+        <div class="user-role">Admin</div>
+      </div>
+      <button class="logout-btn" (click)="logout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="page-header">
+      <div>
+        <h1>User Management 🛡️</h1>
+        <p>Manage all users and their access roles</p>
+      </div>
+      <button class="btn-primary" (click)="openCreate()">+ Add User</button>
+    </header>
+
+    <div class="success-banner" *ngIf="successMsg">✅ {{ successMsg }}</div>
+    <div class="alert-error" *ngIf="error && !showModal">{{ error }}</div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value">{{ users.length }}</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-card admin-card">
+        <div class="stat-value">{{ adminCount }}</div>
+        <div class="stat-label">Admins</div>
+      </div>
+      <div class="stat-card user-card">
+        <div class="stat-value">{{ generalCount }}</div>
+        <div class="stat-label">General Users</div>
+      </div>
+      <div class="stat-card active-card">
+        <div class="stat-value">{{ activeCount }}</div>
+        <div class="stat-label">Active</div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="skeleton-table" *ngIf="loading">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3,4]">
+          <div class="skeleton-cell wide"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell short"></div>
+        </div>
+      </div>
+
+      <div class="table-wrap" *ngIf="!loading">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th><th>User ID</th><th>Email</th>
+              <th>Role</th><th>Department</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>
+                <div class="user-cell">
+                  <div class="mini-avatar">{{ user.avatar }}</div>
+                  <span class="bold">{{ user.name }}</span>
+                </div>
+              </td>
+              <td class="mono">{{ user.userId }}</td>
+              <td class="text-muted">{{ user.email }}</td>
+              <td>
+                <span class="role-badge" [class.admin-badge]="user.role === 'Admin'">
+                  {{ user.role === 'Admin' ? '🛡️' : '👤' }} {{ user.role }}
+                </span>
+              </td>
+              <td>{{ user.department || '—' }}</td>
+              <td>
+                <span class="status-dot" [class.active]="user.isActive">
+                  {{ user.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-edit" (click)="openEdit(user)">✏️ Edit</button>
+                  <button class="btn-delete" (click)="deleteUser(user)">🗑️</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingUser ? 'Edit User' : 'Create New User' }}</h2>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <form [formGroup]="userForm" (ngSubmit)="submitForm()">
+      <div class="form-grid">
+
+        <div class="form-group" [class.error]="fUserId.touched && fUserId.invalid">
+          <label>User ID</label>
+          <input type="text" formControlName="userId" placeholder="USR001" [class.disabled]="!!editingUser"/>
+          <span class="err-msg" *ngIf="fUserId.touched && fUserId.hasError('required')">Required</span>
+          <span class="err-msg" *ngIf="fUserId.touched && fUserId.hasError('pattern')">Only uppercase letters and numbers</span>
+        </div>
+
+        <div class="form-group" [class.error]="fName.touched && fName.invalid">
+          <label>Full Name</label>
+          <input type="text" formControlName="name" placeholder="Priyanga S"/>
+          <span class="err-msg" *ngIf="fName.touched && fName.hasError('required')">Required</span>
+        </div>
+
+        <div class="form-group full" [class.error]="fEmail.touched && fEmail.invalid">
+          <label>Email</label>
+          <input type="email" formControlName="email" placeholder="user@nsqtech.com"/>
+          <span class="err-msg" *ngIf="fEmail.touched && fEmail.hasError('required')">Required</span>
+          <span class="err-msg" *ngIf="fEmail.touched && fEmail.hasError('email')">Invalid email</span>
+        </div>
+
+        <div class="form-group" *ngIf="!editingUser" [class.error]="fPassword.touched && fPassword.invalid">
+          <label>Password</label>
+          <input type="password" formControlName="password" placeholder="Min 6 characters"/>
+          <span class="err-msg" *ngIf="fPassword.touched && fPassword.hasError('required')">Required</span>
+          <span class="err-msg" *ngIf="fPassword.touched && fPassword.hasError('minlength')">Min 6 characters</span>
+        </div>
+
+        <div class="form-group">
+          <label>Department</label>
+          <input type="text" formControlName="department" placeholder="Verification"/>
+        </div>
+
+        <div class="form-group full">
+          <label>Role</label>
+          <div class="role-selector">
+            <label class="role-option" [class.active]="fRole.value === 'General User'">
+              <input type="radio" formControlName="role" value="General User" hidden/>
+              <span>👤 General User</span>
+            </label>
+            <label class="role-option" [class.active]="fRole.value === 'Admin'">
+              <input type="radio" formControlName="role" value="Admin" hidden/>
+              <span>🛡️ Admin</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="alert-error" *ngIf="error && showModal">{{ error }}</div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn-submit" [disabled]="submitting">
+          {{ submitting ? 'Saving...' : editingUser ? 'Update User' : 'Create User' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

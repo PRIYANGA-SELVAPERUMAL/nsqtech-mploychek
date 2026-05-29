@@ -1,0 +1,143 @@
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">M</div>
+      <span>MPloyChek</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active"><span>📊</span> Dashboard</a>
+      <a class="nav-item" (click)="goToAdmin()" *ngIf="auth.isAdmin()"><span>🛡️</span> Admin Panel</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-avatar">{{ currentUser?.avatar }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ currentUser?.name }}</div>
+        <div class="user-role">{{ currentUser?.role }}</div>
+      </div>
+      <button class="logout-btn" (click)="logout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <header class="page-header">
+      <div>
+        <h1>Welcome back, {{ firstName }} 👋</h1>
+        <p>{{ currentUser?.department }} · {{ currentUser?.role }}</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-reload" (click)="loadRecords(0)">⟳ Reload</button>
+        <button class="btn-reload btn-delay" (click)="loadRecords(2000)">⏳ Reload (2s delay)</button>
+      </div>
+    </header>
+
+    <!-- User Info Card -->
+    <div class="user-card">
+      <div class="user-card-avatar">{{ currentUser?.avatar }}</div>
+      <div class="user-card-details">
+        <h3>{{ currentUser?.name }}</h3>
+        <p>{{ currentUser?.email }}</p>
+        <div class="user-meta">
+          <span class="badge">{{ currentUser?.role }}</span>
+          <span class="dot">·</span>
+          <span>{{ currentUser?.department }}</span>
+          <span class="dot">·</span>
+          <span>ID: {{ currentUser?.userId }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row" *ngIf="stats">
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total Records</div>
+      </div>
+      <div class="stat-card verified">
+        <div class="stat-value">{{ stats.verified }}</div>
+        <div class="stat-label">Verified</div>
+      </div>
+      <div class="stat-card progress">
+        <div class="stat-value">{{ stats.inProgress }}</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card flagged">
+        <div class="stat-value">{{ stats.flagged }}</div>
+        <div class="stat-label">Flagged</div>
+      </div>
+    </div>
+
+    <!-- Async loading banner -->
+    <div class="async-banner" *ngIf="loading">
+      <div class="async-spinner"></div>
+      <div>
+        <strong>Loading records asynchronously{{ delay > 0 ? ' with ' + delay + 'ms simulated delay' : '' }}...</strong>
+        <p>This showcases RxJS observable async data fetching with loading state management.</p>
+      </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="table-section">
+      <div class="table-header">
+        <h2>{{ auth.isAdmin() ? 'All Verification Records' : 'My Assigned Records' }}</h2>
+        <span class="record-count" *ngIf="!loading">{{ records.length }} records</span>
+      </div>
+
+      <div *ngIf="error" class="alert-error">{{ error }}</div>
+
+      <!-- Skeleton loader -->
+      <div class="skeleton-table" *ngIf="loading">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]">
+          <div class="skeleton-cell wide"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell short"></div>
+        </div>
+      </div>
+
+      <div class="table-wrap" *ngIf="!loading && records.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Record ID</th>
+              <th>Candidate</th>
+              <th>Position</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Submitted</th>
+              <th>Checks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let rec of records">
+              <td class="mono">{{ rec.recordId }}</td>
+              <td class="bold">{{ rec.candidateName }}</td>
+              <td>{{ rec.position }}</td>
+              <td><span class="status-badge" [ngClass]="getStatusClass(rec.status)">{{ rec.status }}</span></td>
+              <td><span class="priority-badge" [ngClass]="getPriorityClass(rec.priority)">{{ rec.priority }}</span></td>
+              <td>{{ rec.submittedDate | date:'dd MMM yyyy' }}</td>
+              <td>
+                <div class="checks">
+                  <span class="check-dot" *ngFor="let c of rec.checks" [title]="c.type + ': ' + c.status"
+                    [ngClass]="{'check-clear': c.status==='Clear'||c.status==='Verified','check-pending':c.status==='Pending','check-flagged':c.status==='Flagged'}">
+                  </span>
+                  <span class="no-checks" *ngIf="rec.checks.length===0">—</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" *ngIf="!loading && records.length === 0">
+        <div class="empty-icon">📋</div>
+        <p>No records assigned to you yet.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
