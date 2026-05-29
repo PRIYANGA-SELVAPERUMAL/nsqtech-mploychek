@@ -1,6 +1,6 @@
 # NSQTech MPloyChek — Internship Code Challenge
 
-A full-stack Angular + Node.js background verification platform built for NSQTech Private Limited.
+A full-stack role-based Background Verification Management System built using Angular 15, Node.js, Express.js, and MongoDB (with in-memory fallback support). The application simulates a real-world digital background verification workflow with role-based access control, user management, verification records, and asynchronous API processing.
 
 ---
 
